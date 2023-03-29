@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 
 class BaseRule(metaclass=ABCMeta):
@@ -8,3 +8,6 @@ class BaseRule(metaclass=ABCMeta):
 
     def validate(self, attribute, value) -> bool:
         raise NotImplementedError
+
+    def message(self) -> str:
+        pass

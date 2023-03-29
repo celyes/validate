@@ -6,4 +6,4 @@ class String(BaseRule):
         return isinstance(value, str)
 
     def message(self) -> str:
-        return 'Field value is not a string'
+        return 'field value is not a string'

@@ -9,4 +9,4 @@ class Numeric(BaseRule):
         return isinstance(value, Union[int, float, complex])
 
     def message(self) -> str:
-        return 'Field value is non-numeric'
+        return 'field value is non-numeric'
