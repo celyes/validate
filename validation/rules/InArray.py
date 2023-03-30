@@ -4,9 +4,9 @@ from typing import Union, Any
 from validation.rules.BaseRule import BaseRule
 
 
-class Numeric(BaseRule):
+class InArray(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
-        return isinstance(value, Union[int, float, complex])
+        return value in self.payload
 
     def message(self) -> str:
-        return 'field value is non-numeric'
+        return 'field value is not in the given list'
