@@ -9,7 +9,8 @@ class BaseRequest(metaclass=ABCMeta):
     __is_valid = False
     __data = {}
     __errors = {}
-    __RULES_MAP = rules_to_objects_map
+    __rules_map = rules_to_objects_map
+    __user_provided_validation_messages = {}
 
     @staticmethod
     def rules() -> Dict:
@@ -43,11 +44,12 @@ class BaseRequest(metaclass=ABCMeta):
         :return: A boolean value indicating whether the data passes the validation or a dictionary containing error messages.
         :rtype: bool or dict
         """
+        cls.__user_provided_validation_messages = cls.messages() or {}
         if cls.authorize():
             rules = cls.rules()
             for field_rules in rules:
                 cls.__validate_single_field(
-                    rules_map=cls.__RULES_MAP,
+                    rules_map=cls.__rules_map,
                     attribute=field_rules,
                     rules=rules[field_rules],
                     value=cls.__data.get(field_rules)
@@ -108,6 +110,7 @@ class BaseRequest(metaclass=ABCMeta):
         if isinstance(rules, str):
             rules = rules.split('|')
         field_errors = []
+        extracted_rule_with_data = None
         for rule in rules:
             if isinstance(rule, str):
                 extracted_rule_with_data = cls.extract_rule_data(rule=rule)
@@ -117,7 +120,10 @@ class BaseRequest(metaclass=ABCMeta):
                 rule_object = rule
             try:
                 if not rule_object.validate(attribute=attribute, value=value):
-                    field_errors.append(rule_object.message())
+                    user_provided_message = cls.__user_provided_validation_messages.get(
+                        f"{attribute}.{extracted_rule_with_data['rule_name']}"
+                    ) if isinstance(rule, str) else None
+                    field_errors.append(user_provided_message or rule_object.message())
             except (ValueError, AttributeError):
                 raise InvalidRuleException(
                     f"Invalid validation rule: {extracted_rule_with_data['rule_name']}. Check your request "
@@ -175,3 +181,7 @@ class BaseRequest(metaclass=ABCMeta):
     def extract_rule_payload(cls, payload):
         payload = payload.split(',')
         return payload[0] if len(payload) == 1 else payload
+
+    @classmethod
+    def messages(cls) -> Dict:
+        pass
