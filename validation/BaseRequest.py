@@ -1,31 +1,63 @@
 from abc import ABCMeta
-from typing import Dict, Union
-from validation.rules_map import RULES
+from typing import Dict, Union, List, Any
+
+from validation.exceptions import InvalidRuleException, UnauthorizedRequestException
+from validation.rules_map import rules_to_objects_map
 
 
 class BaseRequest(metaclass=ABCMeta):
     __is_valid = False
     __data = {}
     __errors = {}
+    __RULES_MAP = rules_to_objects_map
 
     @staticmethod
     def rules() -> Dict:
-        raise NotImplementedError("Method not implemented")
+        """Returns a dictionary of validation rules for the request.
+
+        :raises NotImplementedError: The method is not implemented.
+        :return: A dictionary of validation rules.
+        :rtype: dict
+        """
+        raise NotImplementedError("Method `rules` not implemented")
+
+    @staticmethod
+    def authorize() -> bool:
+        raise NotImplementedError("Method `authorize` not implemented")
 
     @classmethod
     def set_data(cls, data: Dict) -> None:
+        """Sets the request data for the class.
+
+        :param data: The data to set for the request.
+        :type data: dict
+        :return: None
+        :rtype: None
+        """
         cls.__data = data
 
     @classmethod
     def handle(cls) -> Union[bool, Dict]:
-        rules = cls.rules()
-        for field_rules in rules:
-            cls.__validate_single_field(field_rules, rules[field_rules], cls.__data.get(field_rules))
-        after_validation_errors = cls.get_errors()
-        if len(after_validation_errors.values()) == 0:
-            cls.__is_valid = True
-            return True
-        return cls.get_errors()
+        """Handles validation for the given rules and returns validation result.
+
+        :return: A boolean value indicating whether the data passes the validation or a dictionary containing error messages.
+        :rtype: bool or dict
+        """
+        if cls.authorize():
+            rules = cls.rules()
+            for field_rules in rules:
+                cls.__validate_single_field(
+                    rules_map=cls.__RULES_MAP,
+                    attribute=field_rules,
+                    rules=rules[field_rules],
+                    value=cls.__data.get(field_rules)
+                )
+            after_validation_errors = cls.get_errors()
+            if len(after_validation_errors.values()) == 0:
+                cls.__is_valid = True
+                return True
+            return cls.get_errors()
+        raise UnauthorizedRequestException("Request is not authorized.")
 
     @classmethod
     def passes(cls) -> bool:
@@ -33,40 +65,113 @@ class BaseRequest(metaclass=ABCMeta):
 
     @classmethod
     def prepare_for_validation(cls) -> None:
+        """A hook that executes before starting the validation process.
+
+        :return: Nothing
+        :rtype: None
+        """
         pass
 
     @classmethod
     def merge(cls, data_to_add: Dict) -> None:
+        """Merges the given dictionary of data into the existing request data.
+
+        :param data_to_add: The dictionary of data to merge.
+        :type data_to_add: dict
+        :return: None
+        :rtype: None
+        """
         cls.__data = {**cls.__data, **data_to_add}
 
     @classmethod
     def passed_validation(cls) -> None:
+        """A hook that executes after the validation success and the data is valid.
+
+        :return: None
+        :rtype: None
+        """
         pass
 
     @classmethod
-    def __validate_single_field(cls, attribute, rules, value) -> None:
+    def __validate_single_field(cls, rules_map: Dict, attribute: str, rules: Union[str, List], value: Any) -> None:
+        """Validates a single field against the given rules.
+
+        :param attribute: The attribute being validated.
+        :type attribute: str
+        :param rules: The rules to validate against, as a list or a pipe-separated string.
+        :type rules: Union[list, str]
+        :param value: The value of the attribute being validated.
+        :type value: Any
+        :return: None
+        :rtype: None
+        """
         if isinstance(rules, str):
             rules = rules.split('|')
         field_errors = []
         for rule in rules:
-            rule_object = RULES[rule]()
-            if not rule_object.validate(attribute=attribute, value=value):
-                field_errors.append(rule_object.message())
+            if isinstance(rule, str):
+                extracted_rule_with_data = cls.extract_rule_data(rule=rule)
+                rule_object = rules_map[extracted_rule_with_data['rule_name']]()
+                rule_object.set_validation_payload(payload=extracted_rule_with_data['rule_payload'])
+            else:
+                rule_object = rule
+            try:
+                if not rule_object.validate(attribute=attribute, value=value):
+                    field_errors.append(rule_object.message())
+            except (ValueError, AttributeError):
+                raise InvalidRuleException(
+                    f"Invalid validation rule: {extracted_rule_with_data['rule_name']}. Check your request "
+                    f"class."
+                )
         if len(field_errors) > 0:
             cls.set_field_errors(attribute, field_errors)
 
     @classmethod
     def get_request_data(cls) -> Dict:
+        """Returns the request data stored in the class.
+
+        :return: A dictionary containing the request data.
+        :rtype: dict
+        """
         return cls.__data
 
     @classmethod
     def get_errors(cls) -> Dict:
+        """Returns the validation errors stored in the class.
+
+        :return: A dictionary containing errors resulting from the validation process.
+        :rtype: dict
+        """
         return cls.__errors
 
     @classmethod
-    def set_field_errors(cls, attribute, errors_list):
+    def set_field_errors(cls, attribute: str, errors_list: List):
+        """Sets the errors for the specified field.
+
+        :param attribute: The attribute to set the errors for.
+        :type attribute: str
+        :param errors_list: The list of errors to set.
+        :type errors_list: list
+        :return: None
+        :rtype: None
+        """
         cls.__errors[attribute] = errors_list
 
     @classmethod
     def add_metadata(cls, metadata: Dict):
         cls.__data['_meta'] = metadata
+
+    @classmethod
+    def extract_rule_data(cls, rule):
+        rule_parts = rule.split(':')
+        rule_name = rule_parts[0]
+        rule_payload = rule_parts[-1] if rule_parts[0] != rule_parts[-1] else None
+        return {
+            'rule_name': rule_name,
+            'rule_payload': (cls.extract_rule_payload(rule_payload) if rule_payload else rule_payload)
+        }
+
+    @classmethod
+    def extract_rule_payload(cls, payload):
+        payload = payload.split(',')
+        return payload[0] if len(payload) == 1 else payload

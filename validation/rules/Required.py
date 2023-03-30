@@ -1,8 +1,10 @@
+from typing import Any
+
 from validation.rules.BaseRule import BaseRule
 
 
 class Required(BaseRule):
-    def validate(self, attribute, value = None) -> bool:
+    def validate(self, attribute: str, value: Any = None) -> bool:
         return value is not None
 
     def message(self) -> str:

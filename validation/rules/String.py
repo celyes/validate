@@ -1,8 +1,10 @@
+from typing import Any
+
 from validation.rules.BaseRule import BaseRule
 
 
 class String(BaseRule):
-    def validate(self, attribute, value) -> bool:
+    def validate(self, attribute: str, value: Any) -> bool:
         return isinstance(value, str)
 
     def message(self) -> str:
