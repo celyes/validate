@@ -54,7 +54,7 @@ class BaseRequest(metaclass=ABCMeta):
                     rules_map=cls.__rules_map,
                     attribute=field_rules,
                     rules=rules[field_rules],
-                    value=cls.__data.get(field_rules)
+                    value=cls.__data.get(field_rules),
                 )
             after_validation_errors = cls.get_errors()
             if len(after_validation_errors.values()) == 0:
@@ -97,7 +97,9 @@ class BaseRequest(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def __validate_single_field(cls, rules_map: Dict, attribute: str, rules: Union[str, List], value: Any) -> None:
+    def __validate_single_field(
+        cls, rules_map: Dict, attribute: str, rules: Union[str, List], value: Any
+    ) -> None:
         """Validates a single field against the given rules.
 
         :param attribute: The attribute being validated.
@@ -110,15 +112,17 @@ class BaseRequest(metaclass=ABCMeta):
         :rtype: None
         """
         if isinstance(rules, str):
-            rules = rules.split('|')
+            rules = rules.split("|")
         field_errors = []
         extracted_rule_with_data = None
         for rule in rules:
             if isinstance(rule, str):
                 try:
                     extracted_rule_with_data = cls.extract_rule_data(rule=rule)
-                    rule_object = rules_map[extracted_rule_with_data['rule_name']]()
-                    rule_object.set_validation_payload(payload=extracted_rule_with_data['rule_payload'])
+                    rule_object = rules_map[extracted_rule_with_data["rule_name"]]()
+                    rule_object.set_validation_payload(
+                        payload=extracted_rule_with_data["rule_payload"]
+                    )
                 except KeyError:
                     raise InvalidRuleException(
                         f"Rule `{extracted_rule_with_data['rule_name']} does not exist. check the rule name."
@@ -131,8 +135,9 @@ class BaseRequest(metaclass=ABCMeta):
                         cls.__get_user_provided_message(
                             attribute=attribute,
                             extracted_rule=extracted_rule_with_data,
-                            rule=rule
-                        ) or rule_object.message(attribute=attribute)
+                            rule=rule,
+                        )
+                        or rule_object.message(attribute=attribute)
                     )
             except (ValueError, AttributeError):
                 raise InvalidRuleException(
@@ -144,14 +149,18 @@ class BaseRequest(metaclass=ABCMeta):
 
     @classmethod
     def __get_user_provided_message(
-            cls,
-            attribute: str,
-            extracted_rule: Union[Dict, None],
-            rule: Union[BaseRule, str]
+        cls,
+        attribute: str,
+        extracted_rule: Union[Dict, None],
+        rule: Union[BaseRule, str],
     ) -> str:
-        return cls.__user_provided_validation_messages.get(
-            f"{attribute}.{extracted_rule['rule_name']}"
-        ) if isinstance(rule, str) else None
+        return (
+            cls.__user_provided_validation_messages.get(
+                f"{attribute}.{extracted_rule['rule_name']}"
+            )
+            if isinstance(rule, str)
+            else None
+        )
 
     @classmethod
     def get_errors(cls) -> Dict:
@@ -177,19 +186,24 @@ class BaseRequest(metaclass=ABCMeta):
 
     @classmethod
     def extract_rule_data(cls, rule: str) -> Dict:
-        rule_parts = rule.split(':')
+        rule_parts = rule.split(":")
         rule_name = rule_parts[0]
         rule_payload = rule_parts[-1] if rule_parts[0] != rule_parts[-1] else None
         return {
-            'rule_name': rule_name,
-            'rule_payload': (cls.extract_rule_payload(rule_payload) if rule_payload else rule_payload)
+            "rule_name": rule_name,
+            "rule_payload": (
+                cls.extract_rule_payload(rule_payload) if rule_payload else rule_payload
+            ),
         }
 
     @classmethod
     def extract_rule_payload(cls, payload: str) -> Union[List, str]:
-        payload = payload.split(',')
+        payload = payload.split(",")
         return payload[0] if len(payload) == 1 else payload
 
     @classmethod
     def messages(cls) -> Dict:
         pass
+
+    def get_data(self) -> Dict:
+        return self.__data
