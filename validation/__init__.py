@@ -1,6 +1,5 @@
 from typing import Dict
 
-from .BaseRequest import BaseRequest
 from .exceptions import ValidationError
 
 

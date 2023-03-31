@@ -3,9 +3,9 @@ from typing import Any
 from validation.rules.BaseRule import BaseRule
 
 
-class String(BaseRule):
+class InList(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
-        return isinstance(value, str)
+        return value in self.payload
 
     def message(self, attribute: str) -> str:
-        return f'{attribute} is not a string'
+        return f'{attribute} is not in the given list'
