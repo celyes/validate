@@ -10,4 +10,4 @@ def validate(validation_class, request_data: Dict):
     if not validation_class.passes():
         raise ValidationError("Invalid data", errors=validation_class.get_errors())
     validation_class.passed_validation()
-
+    return True
