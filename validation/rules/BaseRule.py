@@ -3,7 +3,6 @@ from typing import Any
 
 
 class BaseRule(metaclass=ABCMeta):
-
     payload = None
 
     def __str__(self):
@@ -12,7 +11,7 @@ class BaseRule(metaclass=ABCMeta):
     def validate(self, attribute: str, value: Any) -> bool:
         raise NotImplementedError
 
-    def message(self) -> str:
+    def message(self, attribute: str) -> str:
         pass
 
     def set_validation_payload(self, payload):

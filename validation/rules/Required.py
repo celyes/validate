@@ -7,5 +7,5 @@ class Required(BaseRule):
     def validate(self, attribute: str, value: Any = None) -> bool:
         return value is not None
 
-    def message(self) -> str:
-        return 'field is required'
+    def message(self, attribute: str) -> str:
+        return f'{attribute} field is required'

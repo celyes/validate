@@ -2,6 +2,7 @@ from abc import ABCMeta
 from typing import Dict, Union, List, Any
 
 from validation.exceptions import InvalidRuleException, UnauthorizedRequestException
+from validation.rules.BaseRule import BaseRule
 from validation.rules_map import rules_to_objects_map
 
 
@@ -41,7 +42,8 @@ class BaseRequest(metaclass=ABCMeta):
     def handle(cls) -> Union[bool, Dict]:
         """Handles validation for the given rules and returns validation result.
 
-        :return: A boolean value indicating whether the data passes the validation or a dictionary containing error messages.
+        :return: A boolean value indicating whether the data passes the validation or a dictionary containing error
+        messages.
         :rtype: bool or dict
         """
         cls.__user_provided_validation_messages = cls.messages() or {}
@@ -87,7 +89,7 @@ class BaseRequest(metaclass=ABCMeta):
 
     @classmethod
     def passed_validation(cls) -> None:
-        """A hook that executes after the validation success and the data is valid.
+        """A hook that executes after the validation succeeds and the data is valid.
 
         :return: None
         :rtype: None
@@ -113,17 +115,25 @@ class BaseRequest(metaclass=ABCMeta):
         extracted_rule_with_data = None
         for rule in rules:
             if isinstance(rule, str):
-                extracted_rule_with_data = cls.extract_rule_data(rule=rule)
-                rule_object = rules_map[extracted_rule_with_data['rule_name']]()
-                rule_object.set_validation_payload(payload=extracted_rule_with_data['rule_payload'])
+                try:
+                    extracted_rule_with_data = cls.extract_rule_data(rule=rule)
+                    rule_object = rules_map[extracted_rule_with_data['rule_name']]()
+                    rule_object.set_validation_payload(payload=extracted_rule_with_data['rule_payload'])
+                except KeyError:
+                    raise InvalidRuleException(
+                        f"Rule `{extracted_rule_with_data['rule_name']} does not exist. check the rule name."
+                    )
             else:
                 rule_object = rule
             try:
                 if not rule_object.validate(attribute=attribute, value=value):
-                    user_provided_message = cls.__user_provided_validation_messages.get(
-                        f"{attribute}.{extracted_rule_with_data['rule_name']}"
-                    ) if isinstance(rule, str) else None
-                    field_errors.append(user_provided_message or rule_object.message())
+                    field_errors.append(
+                        cls.__get_user_provided_message(
+                            attribute=attribute,
+                            extracted_rule=extracted_rule_with_data,
+                            rule=rule
+                        ) or rule_object.message(attribute=attribute)
+                    )
             except (ValueError, AttributeError):
                 raise InvalidRuleException(
                     f"Invalid validation rule: {extracted_rule_with_data['rule_name']}. Check your request "
@@ -133,13 +143,15 @@ class BaseRequest(metaclass=ABCMeta):
             cls.set_field_errors(attribute, field_errors)
 
     @classmethod
-    def get_request_data(cls) -> Dict:
-        """Returns the request data stored in the class.
-
-        :return: A dictionary containing the request data.
-        :rtype: dict
-        """
-        return cls.__data
+    def __get_user_provided_message(
+            cls,
+            attribute: str,
+            extracted_rule: Union[Dict, None],
+            rule: Union[BaseRule, str]
+    ) -> str:
+        return cls.__user_provided_validation_messages.get(
+            f"{attribute}.{extracted_rule['rule_name']}"
+        ) if isinstance(rule, str) else None
 
     @classmethod
     def get_errors(cls) -> Dict:
@@ -151,7 +163,7 @@ class BaseRequest(metaclass=ABCMeta):
         return cls.__errors
 
     @classmethod
-    def set_field_errors(cls, attribute: str, errors_list: List):
+    def set_field_errors(cls, attribute: str, errors_list: List) -> None:
         """Sets the errors for the specified field.
 
         :param attribute: The attribute to set the errors for.
@@ -164,11 +176,7 @@ class BaseRequest(metaclass=ABCMeta):
         cls.__errors[attribute] = errors_list
 
     @classmethod
-    def add_metadata(cls, metadata: Dict):
-        cls.__data['_meta'] = metadata
-
-    @classmethod
-    def extract_rule_data(cls, rule):
+    def extract_rule_data(cls, rule: str) -> Dict:
         rule_parts = rule.split(':')
         rule_name = rule_parts[0]
         rule_payload = rule_parts[-1] if rule_parts[0] != rule_parts[-1] else None
@@ -178,7 +186,7 @@ class BaseRequest(metaclass=ABCMeta):
         }
 
     @classmethod
-    def extract_rule_payload(cls, payload):
+    def extract_rule_payload(cls, payload: str) -> Union[List, str]:
         payload = payload.split(',')
         return payload[0] if len(payload) == 1 else payload
 

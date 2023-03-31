@@ -1,13 +1,16 @@
 from typing import Any
 
 from validation.rules.BaseRule import BaseRule
-from validation.exceptions import InvalidRuleException
 
 
 class Between(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
         self.payload.sort()
-        return int(self.payload[0]) <= int(value) <= int(self.payload[-1]) if value else False
+        return (
+            int(self.payload[0])
+            <= int(value)
+            <= int(self.payload[-1]) if value else False
+        )
 
-    def message(self) -> str:
-        return 'field value is not in specified range'
+    def message(self, attribute: str) -> str:
+        return f'{attribute} is not in specified range'
