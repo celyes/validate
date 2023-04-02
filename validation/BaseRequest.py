@@ -1,8 +1,12 @@
 from abc import ABCMeta
 from typing import Dict, Union, List, Any
 
-from validation.exceptions import InvalidRuleException, UnauthorizedRequestException
-from validation.rules.BaseRule import BaseRule
+from validation.ErrorBag import ErrorBag
+from validation.exceptions import (
+    InvalidRuleException,
+    UnauthorizedRequestException,
+)
+
 from validation.rules_map import rules_to_objects_map
 
 
@@ -12,6 +16,7 @@ class BaseRequest(metaclass=ABCMeta):
     __errors = {}
     __rules_map = rules_to_objects_map
     __user_provided_validation_messages = {}
+    __error_bag = ErrorBag()
 
     @staticmethod
     def rules() -> Dict:
@@ -48,19 +53,19 @@ class BaseRequest(metaclass=ABCMeta):
         """
         cls.__user_provided_validation_messages = cls.messages() or {}
         if cls.authorize():
-            rules = cls.rules()
-            for field_rules in rules:
-                cls.__validate_single_field(
+            fields = cls.rules()
+            for field in fields:
+                cls.__validate_field(
                     rules_map=cls.__rules_map,
-                    attribute=field_rules,
-                    rules=rules[field_rules],
-                    value=cls.__data.get(field_rules),
+                    attribute=field,
+                    rules=fields[field],
+                    value=cls.__data.get(field.split(".")[0]),
                 )
-            after_validation_errors = cls.get_errors()
-            if len(after_validation_errors.values()) == 0:
-                cls.__is_valid = True
-                return True
-            return cls.get_errors()
+            if cls.__error_bag.is_not_empty():
+                cls.__is_valid = False
+                return False
+            cls.__is_valid = True
+            return True
         raise UnauthorizedRequestException("Request is not authorized.")
 
     @classmethod
@@ -97,9 +102,9 @@ class BaseRequest(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def __validate_single_field(
+    def __validate_field(
         cls, rules_map: Dict, attribute: str, rules: Union[str, List], value: Any
-    ) -> None:
+    ) -> ErrorBag:
         """Validates a single field against the given rules.
 
         :param attribute: The attribute being validated.
@@ -108,9 +113,20 @@ class BaseRequest(metaclass=ABCMeta):
         :type rules: Union[list, str]
         :param value: The value of the attribute being validated.
         :type value: Any
-        :return: None
-        :rtype: None
+        :return: List
+        :rtype: List
         """
+        return cls.__validate_nested_field(
+            rules_map=rules_map,
+            attribute=attribute.split("."),
+            rules=rules,
+            value=value,
+        )
+
+    @classmethod
+    def __validate_single_field(
+        cls, rules_map: Dict, attribute: str, rules: Union[str, List], value: Any
+    ):
         if isinstance(rules, str):
             rules = rules.split("|")
         field_errors = []
@@ -125,64 +141,78 @@ class BaseRequest(metaclass=ABCMeta):
                     )
                 except KeyError:
                     raise InvalidRuleException(
-                        f"Rule `{extracted_rule_with_data['rule_name']} does not exist. check the rule name."
+                        f"Rule `{extracted_rule_with_data['rule_name']}` does not exist. check the rule name."
                     )
             else:
                 rule_object = rule
             try:
                 if not rule_object.validate(attribute=attribute, value=value):
-                    field_errors.append(
-                        cls.__get_user_provided_message(
-                            attribute=attribute,
-                            extracted_rule=extracted_rule_with_data,
-                            rule=rule,
-                        )
-                        or rule_object.message(attribute=attribute)
-                    )
+                    field_errors.append(rule_object.message(attribute=attribute[0]))
             except (ValueError, AttributeError):
                 raise InvalidRuleException(
                     f"Invalid validation rule: {extracted_rule_with_data['rule_name']}. Check your request "
                     f"class."
                 )
-        if len(field_errors) > 0:
-            cls.set_field_errors(attribute, field_errors)
+        return field_errors
 
     @classmethod
-    def __get_user_provided_message(
+    def __validate_nested_field(
         cls,
-        attribute: str,
-        extracted_rule: Union[Dict, None],
-        rule: Union[BaseRule, str],
-    ) -> str:
-        return (
-            cls.__user_provided_validation_messages.get(
-                f"{attribute}.{extracted_rule['rule_name']}"
-            )
-            if isinstance(rule, str)
-            else None
-        )
+        rules_map: Dict,
+        attribute: Union[str, List],
+        rules: Union[str, List],
+        value: Any,
+    ):
+        if len(attribute) == 1:
+            if attribute[0] == "*":
+                for key, single_value in enumerate(value):
+                    validation_result = cls.__validate_single_field(
+                        rules_map=rules_map,
+                        attribute=attribute,
+                        rules=rules,
+                        value=single_value,
+                    )
+                    cls.__error_bag.add_error(key=attribute[0], error=validation_result)
+            else:
+                validation_result = cls.__validate_single_field(
+                    rules_map=rules_map,
+                    attribute=attribute,
+                    rules=rules,
+                    value=value[attribute[0]] if isinstance(value, Dict) else value,
+                )
+
+                cls.__error_bag.add_error(key=attribute[0], error=validation_result)
+        else:
+            if attribute[0] == "*":
+                try:
+                    for key, single_value in enumerate(value):
+                        cls.__validate_nested_field(
+                            rules_map=rules_map,
+                            attribute=attribute[1:],
+                            rules=rules,
+                            value=single_value.get(attribute[1]),
+                        )
+                except TypeError:
+                    cls.__error_bag.add_error(
+                        key=attribute[0], error="field is required"
+                    )
+            else:
+                cls.__validate_nested_field(
+                    rules_map=rules_map,
+                    attribute=attribute[1:],
+                    rules=rules,
+                    value=value,
+                )
+        return cls.__error_bag
 
     @classmethod
-    def get_errors(cls) -> Dict:
+    def get_errors(cls) -> ErrorBag:
         """Returns the validation errors stored in the class.
 
         :return: A dictionary containing errors resulting from the validation process.
         :rtype: dict
         """
-        return cls.__errors
-
-    @classmethod
-    def set_field_errors(cls, attribute: str, errors_list: List) -> None:
-        """Sets the errors for the specified field.
-
-        :param attribute: The attribute to set the errors for.
-        :type attribute: str
-        :param errors_list: The list of errors to set.
-        :type errors_list: list
-        :return: None
-        :rtype: None
-        """
-        cls.__errors[attribute] = errors_list
+        return cls.__error_bag
 
     @classmethod
     def extract_rule_data(cls, rule: str) -> Dict:
