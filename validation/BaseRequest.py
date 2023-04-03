@@ -55,13 +55,14 @@ class BaseRequest(metaclass=ABCMeta):
         if cls.authorize():
             fields = cls.rules()
             for field in fields:
+                cls.__error_bag.set_current_field(field=field)
                 cls.__validate_field(
                     rules_map=cls.__rules_map,
                     attribute=field,
                     rules=fields[field],
                     value=cls.__data.get(field.split(".")[0]),
                 )
-            if cls.__error_bag.is_not_empty():
+            if cls.__error_bag.has_errors():
                 cls.__is_valid = False
                 return False
             cls.__is_valid = True
@@ -116,12 +117,16 @@ class BaseRequest(metaclass=ABCMeta):
         :return: List
         :rtype: List
         """
-        return cls.__validate_nested_field(
+        attribute = attribute.split(".")
+        cls.__error_bag.set_current_field(field=attribute)
+        validation_errors = cls.__validate_nested_field(
             rules_map=rules_map,
-            attribute=attribute.split("."),
+            attribute=attribute,
             rules=rules,
             value=value,
         )
+        cls.__error_bag.reset_current_field()
+        return validation_errors
 
     @classmethod
     def __validate_single_field(
@@ -147,7 +152,14 @@ class BaseRequest(metaclass=ABCMeta):
                 rule_object = rule
             try:
                 if not rule_object.validate(attribute=attribute, value=value):
-                    field_errors.append(rule_object.message(attribute=attribute[0]))
+                    custom_rule = cls.__user_provided_validation_messages.get(
+                        f'{cls.__error_bag.get_current_field()[0]}.{extracted_rule_with_data["rule_name"]}'
+                    )
+                    cls.__error_bag.add_error(
+                        rule_name=extracted_rule_with_data["rule_name"],
+                        error=custom_rule
+                        or rule_object.message(attribute=attribute[0]),
+                    )
             except (ValueError, AttributeError):
                 raise InvalidRuleException(
                     f"Invalid validation rule: {extracted_rule_with_data['rule_name']}. Check your request "
@@ -166,22 +178,19 @@ class BaseRequest(metaclass=ABCMeta):
         if len(attribute) == 1:
             if attribute[0] == "*":
                 for key, single_value in enumerate(value):
-                    validation_result = cls.__validate_single_field(
+                    cls.__validate_single_field(
                         rules_map=rules_map,
                         attribute=attribute,
                         rules=rules,
                         value=single_value,
                     )
-                    cls.__error_bag.add_error(key=attribute[0], error=validation_result)
             else:
-                validation_result = cls.__validate_single_field(
+                cls.__validate_single_field(
                     rules_map=rules_map,
                     attribute=attribute,
                     rules=rules,
                     value=value[attribute[0]] if isinstance(value, Dict) else value,
                 )
-
-                cls.__error_bag.add_error(key=attribute[0], error=validation_result)
         else:
             if attribute[0] == "*":
                 try:
@@ -193,8 +202,11 @@ class BaseRequest(metaclass=ABCMeta):
                             value=single_value.get(attribute[1]),
                         )
                 except TypeError:
+                    custom_rule = cls.__user_provided_validation_messages.get(
+                        f"{cls.__error_bag.get_current_field()[0]}.required"
+                    )
                     cls.__error_bag.add_error(
-                        key=attribute[0], error="field is required"
+                        rule_name="required", error=custom_rule or "Field is required"
                     )
             else:
                 cls.__validate_nested_field(

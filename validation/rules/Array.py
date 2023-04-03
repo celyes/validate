@@ -1,11 +1,11 @@
-from typing import Any
+from typing import Any, List
 
 from validation.rules.BaseRule import BaseRule
 
 
-class InList(BaseRule):
+class Array(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
-        return value in self.payload
+        return isinstance(value, List)
 
     def message(self, attribute: str) -> str:
-        return f'{attribute} is not in the given list'
+        return f"{attribute} is not an array"
