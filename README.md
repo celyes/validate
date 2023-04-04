@@ -49,8 +49,8 @@ except ValidationError as e:
 
 ### Authorizing the request
 
-In your request class, You must include a static method named `authorize`. This method is
-useful when you want to ensure that validation is performed by certain parties only or by all users.
+This method is useful when you want to ensure that validation is performed only by certain parties or by specific users.
+In your request class, include a static method named `authorize` that returns a boolean.
 
 ### Customizing the validation messages
 
