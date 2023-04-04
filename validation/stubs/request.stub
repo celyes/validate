@@ -1,9 +1,0 @@
-from validation import BaseRequest
-
-
-class {{request_class_name}}(BaseRequest):
-
-    @staticmethod
-    def rules() -> Dict:
-        return {}
-

@@ -1,6 +1,6 @@
 import pytest
 
-from validation import validate
+from checkr import validate
 from tests.fixtures import (
     SampleRequestUsingArrayRules,
     SampleRequest,
@@ -8,7 +8,7 @@ from tests.fixtures import (
     SampleRejectedRequest,
     SampleFailingRequest,
 )
-from validation.exceptions import (
+from checkr.exceptions import (
     InvalidRuleException,
     UnauthorizedRequestException,
     ValidationError,

@@ -1,6 +1,6 @@
 from typing import Dict
 
-from validation.BaseRequest import BaseRequest
+from checkr.BaseRequest import BaseRequest
 
 
 class SampleRequest(BaseRequest):
