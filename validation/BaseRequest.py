@@ -19,6 +19,10 @@ class BaseRequest(metaclass=ABCMeta):
     __error_bag = ErrorBag()
 
     @staticmethod
+    def authorize() -> bool:
+        raise NotImplementedError("Method `authorize` not implemented")
+
+    @staticmethod
     def rules() -> Dict:
         """Returns a dictionary of validation rules for the request.
 
@@ -28,9 +32,27 @@ class BaseRequest(metaclass=ABCMeta):
         """
         raise NotImplementedError("Method `rules` not implemented")
 
-    @staticmethod
-    def authorize() -> bool:
-        raise NotImplementedError("Method `authorize` not implemented")
+    @classmethod
+    def prepare_for_validation(cls) -> None:
+        """A hook that executes before starting the validation process.
+
+        :return: Nothing
+        :rtype: None
+        """
+        pass
+
+    @classmethod
+    def passed_validation(cls) -> None:
+        """A hook that executes after the validation succeeds and the data is valid.
+
+        :return: None
+        :rtype: None
+        """
+        pass
+
+    @classmethod
+    def messages(cls) -> Dict:
+        pass
 
     @classmethod
     def set_data(cls, data: Dict) -> None:
@@ -74,15 +96,6 @@ class BaseRequest(metaclass=ABCMeta):
         return cls.__is_valid
 
     @classmethod
-    def prepare_for_validation(cls) -> None:
-        """A hook that executes before starting the validation process.
-
-        :return: Nothing
-        :rtype: None
-        """
-        pass
-
-    @classmethod
     def merge(cls, data_to_add: Dict) -> None:
         """Merges the given dictionary of data into the existing request data.
 
@@ -92,15 +105,6 @@ class BaseRequest(metaclass=ABCMeta):
         :rtype: None
         """
         cls.__data = {**cls.__data, **data_to_add}
-
-    @classmethod
-    def passed_validation(cls) -> None:
-        """A hook that executes after the validation succeeds and the data is valid.
-
-        :return: None
-        :rtype: None
-        """
-        pass
 
     @classmethod
     def __validate_field(
@@ -242,10 +246,6 @@ class BaseRequest(metaclass=ABCMeta):
     def extract_rule_payload(cls, payload: str) -> Union[List, str]:
         payload = payload.split(",")
         return payload[0] if len(payload) == 1 else payload
-
-    @classmethod
-    def messages(cls) -> Dict:
-        pass
 
     def get_data(self) -> Dict:
         return self.__data
