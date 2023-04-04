@@ -1,3 +1,11 @@
+from validation.rules.Endswith import Endswith
+from validation.rules.Email import Email
+from validation.rules.In import In
+from validation.rules.NotIn import NotIn
+from validation.rules.Startswith import Startswith
+from validation.rules.Url import Url
+from validation.rules.Uuid import Uuid
+from validation.rules.Ulid import Ulid
 from validation.rules.Gte import Gte
 from validation.rules.Gt import Gt
 from validation.rules.DateAfter import DateAfter
@@ -58,4 +66,12 @@ rules_to_objects_map = {
     "lowercase": Lowercase,
     "uppercase": Uppercase,
     "mac_address": MacAdress,
+    "uuid": Uuid,
+    "ulid": Ulid,
+    "url": Url,
+    "startswith": Startswith,
+    "endswith": Endswith,
+    "email": Email,
+    "in": In,
+    "not_in": NotIn,
 }
