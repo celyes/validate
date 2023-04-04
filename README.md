@@ -69,7 +69,7 @@ class SampleRequest(BaseRequest):
     def messages(cls) -> Dict:
         return {
             'name.required': 'Please provide a name!',
-            'name.number': 'Oops! not a number!'
+            'age.number': 'Oops! not a number!'
         }
 
     ...
