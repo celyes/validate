@@ -232,7 +232,7 @@ class BaseRequest(metaclass=ABCMeta):
 
     @classmethod
     def extract_rule_data(cls, rule: str) -> Dict:
-        rule_parts = rule.split(":")
+        rule_parts = rule.split(":", 1)
         rule_name = rule_parts[0]
         rule_payload = rule_parts[-1] if rule_parts[0] != rule_parts[-1] else None
         return {
