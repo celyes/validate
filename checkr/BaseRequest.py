@@ -1,13 +1,13 @@
 from abc import ABCMeta
 from typing import Dict, Union, List, Any
 
-from checkr.ErrorBag import ErrorBag
-from checkr.exceptions import (
+from .ErrorBag import ErrorBag
+from .exceptions import (
     InvalidRuleException,
     UnauthorizedRequestException,
 )
 
-from checkr.rules_map import rules_to_objects_map
+from .rules_map import rules_to_objects_map
 
 
 class BaseRequest(metaclass=ABCMeta):

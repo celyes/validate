@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from checkr.rules.BaseRule import BaseRule
+from .rules.BaseRule import BaseRule
 
 
 class Array(BaseRule):

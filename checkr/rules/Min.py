@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from checkr.rules.BaseRule import BaseRule
+from .rules.BaseRule import BaseRule
 
 
 class Min(BaseRule):
