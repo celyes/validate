@@ -43,13 +43,13 @@ dependencies = [
     'ulid-py>=1.1.0',
     'validators>=0.20.0',
 ]
-version = "0.1.1"
+version = "0.1.0"
 dynamic = ["readme"]
 
 
 [project.urls]
 Homepage = 'https://github.com/celyes/checkr'
-Documentation = 'https://github.com/celyes/checkr'
+Documentation = 'https://github.com/celyes/checkr#readme'
 Source = 'https://github.com/celyes/checkr'
 
 
