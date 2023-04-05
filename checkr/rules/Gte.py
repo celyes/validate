@@ -7,7 +7,7 @@ class Gte(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
         try:
             return float(value) >= float(self.payload)
-        except TypeError:
+        except (TypeError, ValueError):
             return False
 
     def message(self, attribute: str) -> str:
