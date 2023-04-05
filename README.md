@@ -181,7 +181,7 @@ class CustomRule(BaseRule):
     def validate(self, attribute: str, value: Any) -> bool:
         return True
 
-    def message(self, attribute: str):
+    def message(self, attribute: str) -> str:
         return f'This field failed because something was incorrect'
 
 ```
@@ -192,5 +192,29 @@ note that this method takes two arguments:
 * `attribute` which is the name of the field
 * `value` which is the actual value.
 
-There's also another method called `message` which is used to return a message in case the validation fails. This method
+The method called `message` is used to return a message in case the validation fails. This method
 receives one parameter, `attribute`, which is the name of the field under validation.
+
+After creating the custom rule, you can use it anywhere like this:
+
+```python
+from typing import Dict
+from checkr.BaseRequest import BaseRequest
+
+ # import the custom rule you created
+from CustomRule import CustomRule 
+
+
+class SampleRequest(BaseRequest):
+
+    @staticmethod
+    def authorize() -> bool:
+        return True
+
+    @staticmethod
+    def rules() -> Dict:
+        return {
+            'phone': ['required', CustomRule()], 
+        }
+
+```
