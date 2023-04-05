@@ -8,7 +8,7 @@ from tests.fixtures import (
     SampleRejectedRequest,
     SampleFailingRequest,
 )
-from checkr.exceptions import (
+from .exceptions import (
     InvalidRuleException,
     UnauthorizedRequestException,
     ValidationError,

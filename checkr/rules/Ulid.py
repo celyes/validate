@@ -1,7 +1,7 @@
 import ulid
 from typing import Any
 
-from checkr.rules.BaseRule import BaseRule
+from .rules.BaseRule import BaseRule
 
 
 class Ulid(BaseRule):

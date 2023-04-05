@@ -1,7 +1,7 @@
 import ipaddress
 from typing import Any
 
-from checkr.rules.BaseRule import BaseRule
+from .rules.BaseRule import BaseRule
 
 
 class Ipv6(BaseRule):

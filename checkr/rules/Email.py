@@ -2,7 +2,7 @@ from typing import Any
 import validators
 from validators import ValidationFailure
 
-from checkr.rules.BaseRule import BaseRule
+from .rules.BaseRule import BaseRule
 
 
 class Email(BaseRule):

@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple, Union
 
 from checkr.exceptions import InvalidRuleException
-from checkr.rules.BaseRule import BaseRule
+from .BaseRule import BaseRule
 
 
 class ArrayOf(BaseRule):
