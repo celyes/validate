@@ -10,5 +10,6 @@ class Numeric(BaseRule):
         except (ValueError, TypeError):
             return False
         return True
+
     def message(self, attribute: str) -> str:
         return f"{attribute} is non-numeric"

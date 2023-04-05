@@ -50,7 +50,6 @@ dynamic = ["readme"]
 [project.urls]
 Homepage = 'https://github.com/celyes/checkr'
 Documentation = 'https://github.com/celyes/checkr'
-Funding = 'https://github.com/sponsors/samuelcolvin'
 Source = 'https://github.com/celyes/checkr'
 
 
