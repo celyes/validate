@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from .rules.BaseRule import BaseRule
+from .BaseRule import BaseRule
 
 
 class Array(BaseRule):

@@ -2,7 +2,7 @@ from typing import Any
 import validators
 from validators import ValidationFailure
 
-from .rules.BaseRule import BaseRule
+from .BaseRule import BaseRule
 
 
 class Email(BaseRule):

@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Any
 
-from .rules.BaseRule import BaseRule
+from .BaseRule import BaseRule
 
 
 class Uuid(BaseRule):

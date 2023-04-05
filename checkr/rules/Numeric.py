@@ -1,6 +1,6 @@
 from typing import Union, Any
 
-from .rules.BaseRule import BaseRule
+from .BaseRule import BaseRule
 
 
 class Numeric(BaseRule):

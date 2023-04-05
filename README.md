@@ -167,8 +167,7 @@ this:
 
 ```python
 from typing import Any
-from .rules.BaseRule import BaseRule
-
+from .BaseRule import BaseRule
 
 class CustomRule(BaseRule):
 
