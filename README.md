@@ -5,6 +5,10 @@ data. With Checkr, you can quickly perform a wide range of checks, and ensuring 
 formatting requirements. With a simple and intuitive API, Checkr is easy to integrate into any project, and its flexible
 configuration options make it a powerful
 tool for building robust and reliable applications.
+### Installation
+```shell
+pip install checkr
+```
 
 ### Usage
 
