@@ -1,13 +1,13 @@
-# Checkr
+# Validate
 
-Checkr is a powerful validation library that enables developers to easily and accurately validate user input and other
-data. With Checkr, you can quickly perform a wide range of checks, and ensuring that data conforms to specific
-formatting requirements. With a simple and intuitive API, Checkr is easy to integrate into any project, and its flexible
+Validate is a powerful validation library that enables developers to easily and accurately validate user input and other
+data. With Validate, you can quickly perform a wide range of checks, and ensuring that data conforms to specific
+formatting requirements. With a simple and intuitive API, Validate is easy to integrate into any project, and its flexible
 configuration options make it a powerful
 tool for building robust and reliable applications.
 ### Installation
 ```shell
-pip install checkr
+pip install Validate
 ```
 
 ### Usage
@@ -15,7 +15,7 @@ pip install checkr
 1. First of all, You need to create a request class that has two methods:
 
 ```python
-from checkr.BaseRequest import BaseRequest
+from Validate.BaseRequest import BaseRequest
 from typing import Dict
 
 
@@ -36,8 +36,8 @@ class SampleRequest(BaseRequest):
 2. Use the request class to validate data:
 
 ```python
-from checkr import validate
-from checkr.exceptions import ValidationError
+from Validate import validate
+from Validate.exceptions import ValidationError
 
 
 request_data = {
@@ -63,7 +63,7 @@ you can use the `messages` method. Here's an example:
 
 ```python
 from typing import Dict
-from checkr.BaseRequest import BaseRequest
+from Validate.BaseRequest import BaseRequest
 
 
 class SampleRequest(BaseRequest):
@@ -86,7 +86,7 @@ You can accomplish this by using the `prepare_for_validation` hook as demonstrat
 
 ```python
 from typing import Dict
-from checkr.BaseRequest import BaseRequest
+from Validate.BaseRequest import BaseRequest
 
 
 class SampleRequest(BaseRequest):
@@ -108,7 +108,7 @@ Notice that this method will not run if the validation finds invalid data.
 
 ```python
 from typing import Dict
-from checkr.BaseRequest import BaseRequest
+from Validate.BaseRequest import BaseRequest
 
 
 class SampleRequest(BaseRequest):
@@ -171,7 +171,7 @@ this:
 
 ```python
 from typing import Any
-from checkr.rules.BaseRule import BaseRule
+from Validate.rules.BaseRule import BaseRule
 
 class CustomRule(BaseRule):
 
@@ -199,7 +199,7 @@ After creating the custom rule, you can use it anywhere like this:
 
 ```python
 from typing import Dict
-from checkr.BaseRequest import BaseRequest
+from Validate.BaseRequest import BaseRequest
 
  # import the custom rule you created
 from CustomRule import CustomRule 
